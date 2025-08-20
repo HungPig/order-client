@@ -20,18 +20,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import AddCategoryModal from "./addCategoryModal";
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
-  data: TData[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
-  data,
 }: DataTableProps<TData, TValue>) {
+  const [data, setData] = React.useState<TData[]>([]);
+  const [loading, setLoading] = React.useState(false);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        "https://ordercoffeebe.onrender.com//api/category"
+      );
+      if (!response.ok) {
+        throw new Error("Failed to fetch categories");
+      }
+      const categories = await response.json();
+      setData(categories);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data khi component mount
+  React.useEffect(() => {
+    fetchCategories();
+  }, []);
+
   const table = useReactTable({
     data,
     columns,
@@ -44,11 +69,16 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  // Hàm để reload data sau khi thêm mới
+  const handleCategoryAdded = () => {
+    fetchCategories();
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between py-4 gap-4">
         <Input
-          placeholder="Name Categories..."
+          placeholder="Search categories..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -57,28 +87,36 @@ export function DataTable<TData, TValue>({
         />
         <AddCategoryModal/>
       </div>
+
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
               </TableRow>
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  Loading...
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -100,13 +138,14 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No categories found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
+
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button
           variant="outline"

@@ -1,31 +1,11 @@
-import { Category, columns} from "./columns";
+import { Category, columns } from "./columns";
 import { DataTable } from "./data-table";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/ui/site-header";
 
-async function getData(): Promise<Category[]> {
-  return [
-    {
-      id: "728ed52f",
-      name: "Trà Sữa",
-    },
-    {
-      id: "728ed53f",
-      name: "Cà Phê",
-    },
-    {
-      id: "728ed54f",
-      name: "Trà Thái Xanh",
-    },
-    // ...
-  ];
-}
-
-export default async function DemoPage() {
-  const data = await getData();
-
+export default function DemoPage() {
   return (
     <SidebarProvider
       style={
@@ -46,7 +26,8 @@ export default async function DemoPage() {
             Home / Products / Categories
           </h2>
 
-          <DataTable columns={columns} data={data} />
+          {/* Chỉ truyền columns, không cần data nữa */}
+          <DataTable columns={columns} />
         </div>
       </SidebarInset>
     </SidebarProvider>
